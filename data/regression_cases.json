@@ -1,0 +1,13 @@
+[
+  {
+    "case_id": "regression-10",
+    "source_run_id": "d3d31042-43c2-4457-a55b-ab0b62f3dd4f",
+    "step_name": "rank_jobs",
+    "input_data": {
+      "jobs_count": 2
+    },
+    "original_error": "ValueError: Job skill data is missing",
+    "expected_behavior": "The step should handle this input without an unhandled exception.",
+    "status": "needs_review"
+  }
+]
