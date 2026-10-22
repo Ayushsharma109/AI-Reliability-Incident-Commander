@@ -18,7 +18,9 @@ from app.regression import (
     list_regression_cases,
 )
 from app.ranking import rank_jobs as calculate_job_ranking
-
+from app.metrics import get_reliability_metrics
+from app.llm_analyst import analyze_incident as run_llm_analysis
+from app.evaluation import evaluate_analysis
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -287,3 +289,52 @@ def create_regression_case(run_id: str, step_id: int):
 @app.get("/regression-cases")
 def get_regression_cases():
     return {"cases": list_regression_cases()}
+
+@app.get("/metrics")
+def reliability_metrics():
+    return get_reliability_metrics()
+
+
+@app.post("/runs/{run_id}/ai-incident-analysis")
+def ai_incident_analysis(run_id: str):
+    trace = get_run_trace(run_id)
+
+    if trace is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Run not found",
+        )
+
+    failed_steps = [
+        step for step in trace["steps"]
+        if step["status"] == "failed"
+    ]
+
+    if not failed_steps:
+        raise HTTPException(
+            status_code=400,
+            detail="This workflow has no failed steps",
+        )
+
+    incident_context = {
+        "run_id": run_id,
+        "workflow_status": trace["run"]["status"],
+        "failed_steps": failed_steps,
+        "all_steps": trace["steps"],
+    }
+
+    try:
+        analysis = run_llm_analysis(incident_context)
+        evaluation = evaluate_analysis(analysis, incident_context)
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=str(exc),
+        )
+
+    return {
+    "run_id": run_id,
+    "analysis_type": "llm_assisted",
+    "analysis": analysis,
+    "evaluation": evaluation,
+}
