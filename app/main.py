@@ -21,6 +21,7 @@ from app.ranking import rank_jobs as calculate_job_ranking
 from app.metrics import get_reliability_metrics
 from app.llm_analyst import analyze_incident as run_llm_analysis
 from app.evaluation import evaluate_analysis
+from fastapi.staticfiles import StaticFiles
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -338,3 +339,9 @@ def ai_incident_analysis(run_id: str):
     "analysis": analysis,
     "evaluation": evaluation,
 }
+
+app.mount(
+    "/",
+    StaticFiles(directory="frontend", html=True),
+    name="frontend",
+)
