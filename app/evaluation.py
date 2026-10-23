@@ -2,8 +2,10 @@
 import re
 
 
+
 def _tokens(value):
-    return set(re.findall(r"[a-z0-9_]+", str(value).lower()))
+    return set(re.findall(r"[a-z0-9]+", str(value).lower()))
+
 
 
 def evaluate_analysis(analysis: dict, incident_context: dict) -> dict:
@@ -17,11 +19,14 @@ def evaluate_analysis(analysis: dict, incident_context: dict) -> dict:
         incident_context.get("workflow_status", ""),
     ]
 
+    
     for step in steps:
         facts.extend([
             step.get("step_name", ""),
             step.get("status", ""),
             step.get("error", "") or "",
+            str(step.get("input_data", "")),
+            str(step.get("output_data", "")),
         ])
 
     fact_tokens = _tokens(" ".join(facts))
